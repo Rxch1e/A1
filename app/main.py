@@ -5,7 +5,7 @@ import uvicorn
 from fastapi import FastAPI, Request, status
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
-from starlette.responses import RedirectResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 from app.config import get_settings
 from app.routers import api_router, router, static_files, templates
@@ -61,6 +61,9 @@ async def health():
 
 @app.exception_handler(status.HTTP_401_UNAUTHORIZED)
 async def unauthorized_redirect_handler(request: Request, exc: Exception):
+    if request.url.path.startswith("/api"):
+        detail = getattr(exc, "detail", "Could not validate credentials")
+        return JSONResponse({"detail": detail}, status_code=status.HTTP_401_UNAUTHORIZED)
     return templates.TemplateResponse(
         request=request,
         name="401.html",

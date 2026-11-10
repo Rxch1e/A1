@@ -1,0 +1,1195 @@
+{
+  "info": {
+    "name": "Apex Awards API",
+    "description": "Postman collection for the JSON REST API implemented in app/routers/api_workflows.py.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "apex-awards-api-2026-11-09"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000", "type": "string" },
+    { "key": "student_username", "value": "", "type": "string" },
+    { "key": "student_email", "value": "", "type": "string" },
+    { "key": "student_password", "value": "", "type": "string" },
+    { "key": "student_token", "value": "", "type": "string" },
+    { "key": "admin_token", "value": "", "type": "string" },
+    { "key": "event_date", "value": "", "type": "string" },
+    { "key": "log_id", "value": "", "type": "string" },
+    { "key": "log2_id", "value": "", "type": "string" },
+    { "key": "prize_id_tshirt", "value": "", "type": "string" },
+    { "key": "prize_id_recognition", "value": "", "type": "string" },
+    { "key": "redemption_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup student",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const keys = ['student_username', 'student_email', 'student_password', 'student_token', 'admin_token', 'event_date', 'log_id', 'log2_id', 'prize_id_tshirt', 'prize_id_recognition', 'redemption_id'];",
+                  "keys.forEach(function (key) { pm.collectionVariables.unset(key); });",
+                  "const ts = Date.now();",
+                  "const username = 'student_' + ts;",
+                  "const password = 'StudentPass123!';",
+                  "pm.collectionVariables.set('student_username', username);",
+                  "pm.collectionVariables.set('student_email', username + '@example.com');",
+                  "pm.collectionVariables.set('student_password', password);",
+                  "const d = new Date();",
+                  "d.setDate(d.getDate() - 2);",
+                  "pm.collectionVariables.set('event_date', d.toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "  pm.expect(json).to.have.property('id');",
+                  "  pm.expect(json).to.have.property('username');",
+                  "  pm.expect(json).to.have.property('email');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json && json.username) { pm.collectionVariables.set('student_username', json.username); }",
+                  "if (json && json.email) { pm.collectionVariables.set('student_email', json.email); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{student_username}}\",\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{student_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/signup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "signup"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Signup same student again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Duplicate signup is rejected', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.be.oneOf([400]);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{student_username}}\",\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{student_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/signup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "signup"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login with wrong password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Wrong password returns 401', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(401);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{student_username}}\",\n  \"password\": \"WrongPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Student login returns 200 and token', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('access_token');",
+                  "  pm.expect(json).to.have.property('token_type');",
+                  "  pm.expect(json.token_type).to.eql('bearer');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('student_token', json.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{student_username}}\",\n  \"password\": \"{{student_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin login returns 200 and token', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('access_token');",
+                  "  pm.expect(json.token_type).to.eql('bearer');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('admin_token', json.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"adminpass\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/progress with no token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthenticated progress request returns 401 JSON', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(401);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/progress",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "progress"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Student - Volunteer Hours",
+      "item": [
+        {
+          "name": "Submit hours = 0 with proof",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Zero-hour submission returns 400', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(400);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "event_name", "value": "Campus cleanup test", "type": "text" },
+                { "key": "hours", "value": "0", "type": "text" },
+                { "key": "event_date", "value": "{{event_date}}", "type": "text" },
+                { "key": "additional_info", "value": "Zero hour validation test", "type": "text" },
+                { "key": "proof", "type": "file", "src": "proof.png" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit 12 hours with proof",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('12-hour submission is created', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "  pm.expect(json).to.have.property('log_id');",
+                  "  pm.expect(json.status).to.eql('pending');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('log_id', String(json.log_id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "event_name", "value": "Library sorting shift", "type": "text" },
+                { "key": "hours", "value": "12", "type": "text" },
+                { "key": "event_date", "value": "{{event_date}}", "type": "text" },
+                { "key": "additional_info", "value": "Volunteer activity for testing", "type": "text" },
+                { "key": "proof", "type": "file", "src": "proof.png" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Submit 2 hours with proof",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Second submission is created', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "  pm.expect(json).to.have.property('log_id');",
+                  "  pm.expect(json.status).to.eql('pending');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('log2_id', String(json.log_id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "event_name", "value": "Food bank support", "type": "text" },
+                { "key": "hours", "value": "2", "type": "text" },
+                { "key": "event_date", "value": "{{event_date}}", "type": "text" },
+                { "key": "additional_info", "value": "Second test submission", "type": "text" },
+                { "key": "proof", "type": "file", "src": "proof.png" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/volunteer-hours",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Volunteer logs are returned for the student', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.be.an('array');",
+                  "  pm.expect(json.length).to.be.at.least(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/progress after submissions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Progress response includes approved_hours as 0', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('approved_hours');",
+                  "  pm.expect(json.approved_hours).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/progress",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "progress"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Review",
+      "item": [
+        {
+          "name": "Student PATCH log_id approved (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Student cannot approve a volunteer log', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(403);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours/{{log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours",
+                "{{log_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin PATCH log 999999 (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unknown volunteer log returns 404', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(404);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"rejected\",\n  \"rejection_reason\": \"Test rejection\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours/999999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours",
+                "999999"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{admin_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin rejects log2_id with blank reason (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Blank rejection reason returns 400', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(400);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"rejected\",\n  \"rejection_reason\": \"   \"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours/{{log2_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours",
+                "{{log2_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{admin_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin rejects log2_id with reason",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin reject request succeeds', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('log_id');",
+                  "  pm.expect(json.status).to.eql('rejected');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"rejected\",\n  \"rejection_reason\": \"Photo is unclear\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours/{{log2_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours",
+                "{{log2_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{admin_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin approves log_id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin approve request succeeds', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('log_id');",
+                  "  pm.expect(json.status).to.eql('approved');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/volunteer-hours/{{log_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "volunteer-hours",
+                "{{log_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{admin_token}}", "type": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Student - Progress and Prizes",
+      "item": [
+        {
+          "name": "GET /api/progress approved_hours=12",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Approved hours are 12 after admin approval', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('approved_hours');",
+                  "  pm.expect(json.approved_hours).to.eql(12);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/progress",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "progress"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/leaderboard?show_all=true",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Leaderboard returns entries array', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('entries');",
+                  "  pm.expect(json.entries).to.be.an('array');",
+                  "  const names = json.entries.map(function (entry) { return entry.username; });",
+                  "  pm.expect(names.includes('admin')).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/leaderboard?show_all=true",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "leaderboard"
+              ],
+              "query": [
+                { "key": "show_all", "value": "true" }
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/prizes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Prizes endpoint returns spendable_balance', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('prizes');",
+                  "  pm.expect(json).to.have.property('spendable_balance');",
+                  "  const shirt = json.prizes.find(function (p) { return p.name === 'Campus T-shirt'; });",
+                  "  const cert = json.prizes.find(function (p) { return p.name === 'Recognition Certificate'; });",
+                  "  if (shirt) { pm.collectionVariables.set('prize_id_tshirt', String(shirt.prize_id)); }",
+                  "  if (cert) { pm.collectionVariables.set('prize_id_recognition', String(cert.prize_id)); }",
+                  "  pm.expect(json.spendable_balance).to.eql(12);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/prizes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "prizes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Redeem Recognition Certificate (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Not enough spendable hours returns 400', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(400);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prize_id\": {{prize_id_recognition}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/redemptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "redemptions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Redeem prize 999999 (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unknown prize returns 404', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(404);",
+                  "  pm.expect(json.detail).to.eql('Prize not found.');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prize_id\": 999999\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/redemptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "redemptions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Redeem Campus T-shirt",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Campus T-shirt redemption succeeds', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(201);",
+                  "  pm.expect(json).to.have.property('redemption_id');",
+                  "  pm.expect(json).to.have.property('status');",
+                  "  pm.expect(json.status).to.eql('pending');",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('redemption_id', String(json.redemption_id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prize_id\": {{prize_id_tshirt}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/redemptions",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "redemptions"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/prizes after redemption",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Spendable balance decreases after redemption', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('spendable_balance');",
+                  "  pm.expect(json.spendable_balance).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/prizes",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "prizes"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Fulfilment",
+      "item": [
+        {
+          "name": "Student PATCH redemption_id fulfilled (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Student cannot fulfill redemption', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(403);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"fulfilled\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/redemptions/{{redemption_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "redemptions",
+                "{{redemption_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{student_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin PATCH redemption 999999 (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unknown redemption returns 404', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(404);",
+                  "  pm.expect(json).to.have.property('detail');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"fulfilled\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/redemptions/999999",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "redemptions",
+                "999999"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{admin_token}}", "type": "string" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin PATCH redemption_id fulfilled",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin fulfillment succeeds', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.code).to.eql(200);",
+                  "  pm.expect(json).to.have.property('redemption_id');",
+                  "  pm.expect(json.status).to.eql('fulfilled');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"fulfilled\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/redemptions/{{redemption_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "redemptions",
+                "{{redemption_id}}"
+              ]
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{admin_token}}", "type": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
